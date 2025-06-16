@@ -31,9 +31,25 @@ void verify_results(double** arr1, double** arr2, double** add, double** sub,
     printf("Results are %s\n", is_correct ? "correct" : "incorrect");
 }
 
-int main() {
-    const int ROWS = 1000;    // Количество строк
-    const int COLS = 1000;    // Количество столбцов
+int main(int argc, char *argv[]) {
+    if (argc != 2 && argc != 4) {
+        printf("Usage: %s <number_of_threads> [rows cols]\n", argv[0]);
+        return 1;
+    }
+
+    int ROWS = 1000;    // Количество строк по умолчанию
+    int COLS = 1000;    // Количество столбцов по умолчанию
+    
+    // Если переданы размеры массивов, используем их
+    if (argc == 4) {
+        ROWS = atoi(argv[2]);
+        COLS = atoi(argv[3]);
+        if (ROWS <= 0 || COLS <= 0) {
+            printf("Error: Dimensions must be positive\n");
+            return 1;
+        }
+    }
+    
     const int N = ROWS * COLS; // Общее количество элементов
     
     // Выделение памяти для массивов
@@ -58,10 +74,26 @@ int main() {
     init_2d_array(arr1, ROWS, COLS);
     init_2d_array(arr2, ROWS, COLS);
     
-    // Получение количества потоков
-    int num_threads = omp_get_max_threads();
-    if (getenv("OMP_NUM_THREADS")) {
-        num_threads = atoi(getenv("OMP_NUM_THREADS"));
+    // Получение количества потоков из аргумента командной строки
+    int num_threads = atoi(argv[1]);
+    if (num_threads <= 0) {
+        printf("Error: Number of threads must be positive\n");
+        // Освобождение памяти
+        for (int i = 0; i < ROWS; i++) {
+            free(arr1[i]);
+            free(arr2[i]);
+            free(add_result[i]);
+            free(sub_result[i]);
+            free(mul_result[i]);
+            free(div_result[i]);
+        }
+        free(arr1);
+        free(arr2);
+        free(add_result);
+        free(sub_result);
+        free(mul_result);
+        free(div_result);
+        return 1;
     }
     omp_set_num_threads(num_threads);
     
@@ -94,18 +126,6 @@ int main() {
     
     // Проверка результатов
     verify_results(arr1, arr2, add_result, sub_result, mul_result, div_result, ROWS, COLS);
-    
-    // Вывод нескольких элементов для проверки
-    printf("\nFirst 3x3 elements of results:\n");
-    printf("Index\tArray1\tArray2\tAdd\tSub\tMul\tDiv\n");
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            printf("[%d,%d]\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
-                   i, j, arr1[i][j], arr2[i][j], 
-                   add_result[i][j], sub_result[i][j], 
-                   mul_result[i][j], div_result[i][j]);
-        }
-    }
 
     // Освобождение памяти
     for (int i = 0; i < ROWS; i++) {

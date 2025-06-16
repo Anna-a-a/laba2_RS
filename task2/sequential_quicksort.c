@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <time.h>
 
-// Функция для обмена элементов
+// Функция для обмена элементов массива
 void swap(int* a, int* b) {
     int temp = *a;
     *a = *b;
     *b = temp;
 }
 
-// Функция разделения массива
+// Функция для разбиения массива (partition)
 int partition(int arr[], int low, int high) {
     int pivot = arr[high];
     int i = (low - 1);
@@ -24,7 +24,7 @@ int partition(int arr[], int low, int high) {
     return (i + 1);
 }
 
-// Функция быстрой сортировки
+// Рекурсивная функция быстрой сортировки
 void quicksort(int arr[], int low, int high) {
     if (low < high) {
         int pi = partition(arr, low, high);
@@ -33,8 +33,17 @@ void quicksort(int arr[], int low, int high) {
     }
 }
 
-int main() {
-    const int N = 1000000;  // Размер массива
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <array_size>\n", argv[0]);
+        return 1;
+    }
+
+    const int N = atoi(argv[1]);  // Размер массива из аргумента командной строки
+    if (N <= 0) {
+        printf("Ошибка: размер массива должен быть положительным\n");
+        return 1;
+    }
     int* arr = (int*)malloc(N * sizeof(int));
     
     // Инициализация массива случайными числами
@@ -46,7 +55,7 @@ int main() {
     // Измерение времени начала
     clock_t start_time = clock();
 
-    // Последовательная сортировка
+    // Последовательная быстрая сортировка
     quicksort(arr, 0, N - 1);
 
     // Измерение времени окончания
@@ -67,7 +76,7 @@ int main() {
     printf("Time elapsed: %f seconds\n", time_elapsed);
     printf("Array is %s\n", is_sorted ? "correctly sorted" : "not sorted correctly");
     
-    // Вывод нескольких элементов для проверки
+    // Вывод первых и последних 5 элементов для проверки
     printf("First 5 elements: ");
     for (int i = 0; i < 5; i++) {
         printf("%d ", arr[i]);

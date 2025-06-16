@@ -6,11 +6,11 @@
 // Функция для инициализации массива случайными числами
 void init_array(double* arr, int size) {
     for (int i = 0; i < size; i++) {
-        arr[i] = (double)(rand() % 1000) / 10.0;  // Случайные числа от 0 до 99.9
+        arr[i] = (double)(rand() % 1000) / 10.0;  // Случайные значения от 0 до 99.9
     }
 }
 
-// Функция для проверки результатов
+// Функция для проверки правильности результатов
 void verify_results(double* arr1, double* arr2, double* add, double* sub, double* mul, double* div, int size) {
     int is_correct = 1;
     for (int i = 0; i < size; i++) {
@@ -22,10 +22,15 @@ void verify_results(double* arr1, double* arr2, double* add, double* sub, double
             break;
         }
     }
-    printf("Results are %s\n", is_correct ? "correct" : "incorrect");
+    printf("Результаты %s\n", is_correct ? "корректны" : "некорректны");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <number_of_threads>\n", argv[0]);
+        return 1;
+    }
+
     const int N = 1000000;  // Размер массивов
     double *arr1 = (double*)malloc(N * sizeof(double));
     double *arr2 = (double*)malloc(N * sizeof(double));
@@ -34,22 +39,29 @@ int main() {
     double *mul_result = (double*)malloc(N * sizeof(double));
     double *div_result = (double*)malloc(N * sizeof(double));
     
-    // Инициализация массивов
+    // Инициализация массивов случайными числами
     srand(time(NULL));
     init_array(arr1, N);
     init_array(arr2, N);
     
-    // Получение количества потоков
-    int num_threads = omp_get_max_threads();
-    if (getenv("OMP_NUM_THREADS")) {
-        num_threads = atoi(getenv("OMP_NUM_THREADS"));
+    // Получение количества потоков из аргумента командной строки
+    int num_threads = atoi(argv[1]);
+    if (num_threads <= 0) {
+        printf("Ошибка: количество потоков должно быть положительным\n");
+        free(arr1);
+        free(arr2);
+        free(add_result);
+        free(sub_result);
+        free(mul_result);
+        free(div_result);
+        return 1;
     }
     omp_set_num_threads(num_threads);
     
     // Измерение времени начала
     double start_time = omp_get_wtime();
 
-    // Параллельные операции
+    // Параллельные арифметические операции
     #pragma omp parallel for
     for (int i = 0; i < N; i++) {
         add_result[i] = arr1[i] + arr2[i];
@@ -66,21 +78,13 @@ int main() {
     double end_time = omp_get_wtime();
     double time_elapsed = end_time - start_time;
 
-    printf("Parallel Array Operations Results:\n");
-    printf("Number of threads: %d\n", num_threads);
-    printf("Array size: %d\n", N);
-    printf("Time elapsed: %f seconds\n", time_elapsed);
+    printf("Результаты параллельных операций над массивами:\n");
+    printf("Количество потоков: %d\n", num_threads);
+    printf("Размер массива: %d\n", N);
+    printf("Время выполнения: %f секунд\n", time_elapsed);
     
     // Проверка результатов
     verify_results(arr1, arr2, add_result, sub_result, mul_result, div_result, N);
-    
-    // Вывод нескольких элементов для проверки
-    printf("\nFirst 5 elements of results:\n");
-    printf("Index\tArray1\tArray2\tAdd\tSub\tMul\tDiv\n");
-    for (int i = 0; i < 5; i++) {
-        printf("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
-               i, arr1[i], arr2[i], add_result[i], sub_result[i], mul_result[i], div_result[i]);
-    }
 
     // Освобождение памяти
     free(arr1);

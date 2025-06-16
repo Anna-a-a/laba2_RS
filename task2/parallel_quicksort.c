@@ -3,14 +3,14 @@
 #include <time.h>
 #include <omp.h>
 
-// Функция для обмена элементов
+// Функция для обмена элементов массива
 void swap(int* a, int* b) {
     int temp = *a;
     *a = *b;
     *b = temp;
 }
 
-// Функция разделения массива
+// Функция для разбиения массива (partition)
 int partition(int arr[], int low, int high) {
     int pivot = arr[high];
     int i = (low - 1);
@@ -25,7 +25,7 @@ int partition(int arr[], int low, int high) {
     return (i + 1);
 }
 
-// Параллельная быстрая сортировка
+// Параллельная рекурсивная быстрая сортировка
 void parallel_quicksort(int arr[], int low, int high) {
     if (low < high) {
         int pi = partition(arr, low, high);
@@ -42,8 +42,17 @@ void parallel_quicksort(int arr[], int low, int high) {
     }
 }
 
-int main() {
-    const int N = 1000000;  // Размер массива
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        printf("Usage: %s <number_of_threads> <array_size>\n", argv[0]);
+        return 1;
+    }
+
+    const int N = atoi(argv[2]);  // Размер массива из аргумента командной строки
+    if (N <= 0) {
+        printf("Ошибка: размер массива должен быть положительным\n");
+        return 1;
+    }
     int* arr = (int*)malloc(N * sizeof(int));
     
     // Инициализация массива случайными числами
@@ -52,17 +61,19 @@ int main() {
         arr[i] = rand() % 1000000;  // Случайные числа от 0 до 999999
     }
     
-    // Получение количества потоков
-    int num_threads = omp_get_max_threads();
-    if (getenv("OMP_NUM_THREADS")) {
-        num_threads = atoi(getenv("OMP_NUM_THREADS"));
+    // Получение количества потоков из аргумента командной строки
+    int num_threads = atoi(argv[1]);
+    if (num_threads <= 0) {
+        printf("Ошибка: количество потоков должно быть положительным\n");
+        free(arr);
+        return 1;
     }
     omp_set_num_threads(num_threads);
     
     // Измерение времени начала
     double start_time = omp_get_wtime();
 
-    // Параллельная сортировка
+    // Параллельная быстрая сортировка
     #pragma omp parallel
     {
         #pragma omp single
@@ -90,7 +101,7 @@ int main() {
     printf("Time elapsed: %f seconds\n", time_elapsed);
     printf("Array is %s\n", is_sorted ? "correctly sorted" : "not sorted correctly");
     
-    // Вывод нескольких элементов для проверки
+    // Вывод первых и последних 5 элементов для проверки
     printf("First 5 elements: ");
     for (int i = 0; i < 5; i++) {
         printf("%d ", arr[i]);
